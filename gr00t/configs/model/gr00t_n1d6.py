@@ -58,6 +58,14 @@ class Gr00tN1d6Config(PretrainedConfig):
     hidden_size: int = 1024
     input_embedding_dim: int = 1536
 
+    # Force/torque embedding configuration (paper: 2509.07962)
+    force_embedding_mode: str = "none"  # "none", "encoder", "decoder_pre", "decoder_post"
+    force_token_mode: str = "single"  # "single" (aggregate history) or "frame" (H tokens)
+    force_history_length: int = 1  # Number of force/torque frames to embed
+    max_force_dim: int = 0  # 0 disables force/torque inputs unless overridden
+    force_objective: bool = False  # Predict future torque jointly with actions
+    force_objective_weight: float = 1.0  # Weight for torque loss
+
     # Global parameters from YAML
     add_pos_embed: bool = True
     attn_dropout: float = 0.2
