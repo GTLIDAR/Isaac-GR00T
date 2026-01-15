@@ -4,6 +4,7 @@ from gr00t.configs.model.gr00t_n1d6 import Gr00tN1d6Config
 from gr00t.model.modules.dit import AlternateVLDiT, DiT
 from gr00t.model.modules.eagle_backbone import EagleBackbone
 from gr00t.model.modules.embodiment_conditioned_mlp import (
+    CategorySpecificLinear,
     CategorySpecificMLP,
     MultiEmbodimentActionEncoder,
 )
@@ -103,9 +104,13 @@ class Gr00tN1d6ActionHead(nn.Module):
                 )
             elif self.force_embedding_mode == "decoder_pre":
                 # For pre-concat we flatten the (history, dim) force sequence into one vector.
+                if self.force_token_mode == "frame":
+                    force_state_dim = config.max_state_dim + self.max_force_dim
+                else:
+                    force_state_dim = config.max_state_dim + self.force_history_dim
                 self.state_force_encoder = CategorySpecificMLP(
                     num_categories=config.max_num_embodiments,
-                    input_dim=config.max_state_dim + self.force_history_dim,
+                    input_dim=force_state_dim,
                     hidden_dim=self.hidden_size,
                     output_dim=self.input_embedding_dim,
                 )
@@ -127,11 +132,10 @@ class Gr00tN1d6ActionHead(nn.Module):
                 hidden_size=self.input_embedding_dim,
                 num_embodiments=config.max_num_embodiments,
             )
-            self.joint_action_decoder = CategorySpecificMLP(
+            self.joint_action_decoder = CategorySpecificLinear(
                 num_categories=config.max_num_embodiments,
                 input_dim=self.hidden_size,
-                hidden_dim=self.hidden_size,
-                output_dim=self.joint_action_dim,
+                hidden_dim=self.joint_action_dim,
             )
 
         self.vlln = (
@@ -482,14 +486,27 @@ class Gr00tN1d6ActionHead(nn.Module):
         if force_token_mask is not None:
             force = force * force_token_mask.unsqueeze(-1).to(dtype=force.dtype)
 
-        batch_size, history_len, force_dim = force.shape
-        flat_force = force.reshape(batch_size, 1, history_len * force_dim)
         if state.dim() == 2:
             state = state.unsqueeze(1)
-        if flat_force.shape[1] == 1 and state.shape[1] > 1:
-            flat_force = flat_force.expand(-1, state.shape[1], -1)
 
-        state_with_force = torch.cat([state, flat_force], dim=-1)
+        if self.force_token_mode == "frame":
+            batch_size, history_len, _ = force.shape
+            if state.shape[1] == 1:
+                state = state.expand(-1, history_len, -1)
+            elif state.shape[1] < history_len:
+                repeat = history_len - state.shape[1]
+                pad = state[:, -1:, :].expand(-1, repeat, -1)
+                state = torch.cat([pad, state], dim=1)
+            elif state.shape[1] > history_len:
+                state = state[:, -history_len:, :]
+            state_with_force = torch.cat([state, force], dim=-1)
+        else:
+            batch_size, history_len, force_dim = force.shape
+            flat_force = force.reshape(batch_size, 1, history_len * force_dim)
+            if flat_force.shape[1] == 1 and state.shape[1] > 1:
+                flat_force = flat_force.expand(-1, state.shape[1], -1)
+            state_with_force = torch.cat([state, flat_force], dim=-1)
+
         return self.state_force_encoder(state_with_force, embodiment_id)
 
     def forward(self, backbone_output: BatchFeature, action_input: BatchFeature) -> BatchFeature:
