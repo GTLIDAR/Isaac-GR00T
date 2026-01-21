@@ -16,16 +16,22 @@ digit_v3_config = {
     ),
     "state": ModalityConfig(
         delta_indices=[0],
-        modality_keys=["lin_vel_in_body", "ang_vel_in_body", "qpos", "qvel"],
-    ),
-    "torque": ModalityConfig(
-        delta_indices=[0],
-        modality_keys=["upper_body_torque"],
+        modality_keys=["lin_vel_in_body", "ang_vel_in_body", "qpos", "qvel", "upper_body_torque"],
     ),
     "action": ModalityConfig(
         delta_indices=list(range(0, 16)),
         modality_keys=["ref_ee_pos_in_body", "ref_lhand_contact_force", "ref_rhand_contact_force"],
         action_configs=[
+            ActionConfig(
+                rep=ActionRepresentation.ABSOLUTE,
+                type=ActionType.EEF,
+                format=ActionFormat.DEFAULT,
+            ),
+            ActionConfig(
+                rep=ActionRepresentation.ABSOLUTE,
+                type=ActionType.EEF,
+                format=ActionFormat.DEFAULT,
+            ),
             ActionConfig(
                 rep=ActionRepresentation.ABSOLUTE,
                 type=ActionType.EEF,

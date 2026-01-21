@@ -84,9 +84,7 @@ class Gr00tN1d6ActionHead(nn.Module):
                 )
 
             force_adapter_input_dim = (
-                self.max_force_dim
-                if self.force_token_mode == "frame"
-                else self.force_history_dim
+                self.max_force_dim if self.force_token_mode == "frame" else self.force_history_dim
             )
             if self.force_embedding_mode == "encoder":
                 self.force_encoder_adapter = CategorySpecificMLP(
@@ -316,9 +314,7 @@ class Gr00tN1d6ActionHead(nn.Module):
                 device=force.device,
                 dtype=force.dtype,
             )
-            mask_pad = torch.zeros(
-                batch_size, pad_len, device=force.device, dtype=torch.bool
-            )
+            mask_pad = torch.zeros(batch_size, pad_len, device=force.device, dtype=torch.bool)
             force = torch.cat([force_pad, force], dim=1)
             force_mask = torch.cat([mask_pad, force_mask], dim=1)
 
@@ -573,9 +569,7 @@ class Gr00tN1d6ActionHead(nn.Module):
             )
             force_token_mask = self._force_token_mask(force_mask)
             if force_token_mask is not None:
-                force_tokens = force_tokens * force_token_mask.unsqueeze(-1).to(
-                    force_tokens.dtype
-                )
+                force_tokens = force_tokens * force_token_mask.unsqueeze(-1).to(force_tokens.dtype)
             state_features = torch.cat((force_tokens, state_features), dim=1)
 
         # Embed noised action (or action-torque) trajectory.
@@ -595,7 +589,9 @@ class Gr00tN1d6ActionHead(nn.Module):
             joint_clean = actions
 
         noise = torch.randn(joint_clean.shape, device=joint_clean.device, dtype=joint_clean.dtype)
-        t = self.sample_time(joint_clean.shape[0], device=joint_clean.device, dtype=joint_clean.dtype)
+        t = self.sample_time(
+            joint_clean.shape[0], device=joint_clean.device, dtype=joint_clean.dtype
+        )
         t = t[:, None, None]  # shape (B,1,1) for broadcast
 
         noisy_trajectory = (1 - t) * noise + t * joint_clean
@@ -675,9 +671,7 @@ class Gr00tN1d6ActionHead(nn.Module):
             pred_forces = pred_joint[..., self.action_dim :]
             velocity_forces = velocity[..., self.action_dim :]
             force_mask = force_target_mask.to(device=pred_forces.device, dtype=pred_forces.dtype)
-            force_loss = (
-                F.mse_loss(pred_forces, velocity_forces, reduction="none") * force_mask
-            )
+            force_loss = F.mse_loss(pred_forces, velocity_forces, reduction="none") * force_mask
             force_loss_value = force_loss.sum() / (force_mask.sum() + 1e-6)
             output["loss"] = action_loss_value + self.force_objective_weight * force_loss_value
             output["force_loss"] = force_loss
@@ -723,9 +717,7 @@ class Gr00tN1d6ActionHead(nn.Module):
             )
             force_token_mask = self._force_token_mask(force_mask)
             if force_token_mask is not None:
-                force_tokens = force_tokens * force_token_mask.unsqueeze(-1).to(
-                    force_tokens.dtype
-                )
+                force_tokens = force_tokens * force_token_mask.unsqueeze(-1).to(force_tokens.dtype)
             state_features = torch.cat((force_tokens, state_features), dim=1)
 
         vl_attn_mask = backbone_output.backbone_attention_mask
@@ -781,9 +773,7 @@ class Gr00tN1d6ActionHead(nn.Module):
         # Set initial actions as the sampled noise.
         batch_size = vl_embeds.shape[0]
         device = vl_embeds.device
-        diffusion_action_dim = (
-            self.joint_action_dim if self.force_objective else self.action_dim
-        )
+        diffusion_action_dim = self.joint_action_dim if self.force_objective else self.action_dim
         actions = torch.randn(
             size=(batch_size, self.config.action_horizon, diffusion_action_dim),
             dtype=vl_embeds.dtype,
