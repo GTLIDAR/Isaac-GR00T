@@ -1,0 +1,50 @@
+{
+    "state": {
+        "lin_vel_in_body": {
+            "start": 0,
+            "end": 3
+        },
+        "ang_vel_in_body": {
+            "start": 3,
+            "end": 6
+        },
+        "qpos": {
+            "start": 6,
+            "end": 26
+        },
+        "qvel": {
+            "start": 26,
+            "end": 46
+        },
+        "upper_body_torque": {
+            "start": 46,
+            "end": 54
+        },
+        "upper_body_torque_hist": {
+            "start": 54,
+            "end": 134
+        }
+    },
+    "action": {
+        "ref_ee_pos_in_body": {
+            "start": 0,
+            "end": 12
+        },
+        "ref_lhand_contact_force": {
+            "start": 12,
+            "end": 13
+        },
+        "ref_rhand_contact_force": {
+            "start": 13,
+            "end": 14
+        }
+    },
+    "video": {
+        "rgb": {
+            "original_key": "observation.images.rgb"
+        }
+    },
+    "annotation": {
+        "human.goal": {}
+    }
+}

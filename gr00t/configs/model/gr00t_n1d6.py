@@ -59,11 +59,11 @@ class Gr00tN1d6Config(PretrainedConfig):
     input_embedding_dim: int = 1536
 
     # Force/torque embedding configuration (paper: 2509.07962)
-    force_embedding_mode: str = "none"  # "none", "encoder", "decoder_pre", "decoder_post"
+    force_embedding_mode: str = "decoder_post"  # "none", "encoder", "decoder_pre", "decoder_post"
     force_token_mode: str = "single"  # "single" (aggregate history) or "frame" (H tokens)
     force_history_length: int = 1  # Number of force/torque frames to embed
-    max_force_dim: int = 0  # 0 disables force/torque inputs unless overridden
-    force_objective: bool = False  # Predict future torque jointly with actions
+    max_force_dim: int = 2  # 0 disables force/torque inputs unless overridden
+    force_objective: bool = True  # Predict future torque jointly with actions
     force_objective_weight: float = 1.0  # Weight for torque loss
 
     # Global parameters from YAML
